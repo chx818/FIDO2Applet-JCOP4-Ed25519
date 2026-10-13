@@ -99,17 +99,34 @@ This fork includes comprehensive audit and defensive improvements based on stati
 
 ---
 
-### 🔏 5. Attestation & Customization Lifecycle
+### 🔏 5. Attestation Lifecycle & Enabling Non-Passkey / Enterprise U2F Support
+
+#### Passkeys vs. Non-Passkey / Traditional 2FA Scenarios
+When evaluating FIDO2/WebAuthn authenticators, relying parties fall into two distinct categories:
+- **Consumer Passkeys (Discoverable Credentials)**:
+  Mainstream services (Google, GitHub, Apple, Microsoft) rely on self-attestation or `none` attestation. In this mode, the server solely cares about verifying the user's public key signature without interrogating device provenance. The default installation of FIDO2Applet (with all-zero AAGUID and self-attestation) works seamlessly for these consumer passkey flows out of the box.
+- **Non-Passkey / Traditional 2FA / Legacy U2F / Enterprise Systems**:
+  - **CTAP1 / U2F Specification Requirement**: The classic U2F protocol *strictly mandates* a verifiable device attestation certificate chain signed by a known P-256 certificate authority. In default self-attestation mode, U2F registration cannot be performed!
+  - **Enterprise Identity Providers & Direct Attestation**: High-security environments (Okta, Duo Security, AWS IAM, financial portals, and corporate VPNs) often enforce strict authenticator allowlists requiring an authentic X.509 device certificate chain and valid AAGUID.
+
+#### Injecting Custom Attestation (Enabling Full U2F & Enterprise 2FA)
+To support both modern Passkeys and strict traditional U2F / Enterprise 2FA workflows, this fork provides a streamlined attestation injection mechanism:
 
 1. **Initial Provisioning Window**:
-   - By default, this applet allows injecting a custom batch/device attestation private key and X.509 certificate chain before any credentials have been created.
-2. **Permanent Attestation Lock**:
-   - As soon as the first credential is created, attestation injection is permanently locked.
-   - Once successfully injected, custom attestation identities survive CTAP card resets.
-3. **Factory Locking Option**:
-   - For enterprise or high-security factory deployments where attestation must not be altered, installing with parameter `A100F4` permanently locks self-attestation mode and disables injection immediately.
-4. **Dual Algorithm Attestation**:
-   - Supports both **PureEd25519 self-attestation** (for Ed25519 credentials) and **P-256 basic attestation** (signing Ed25519 `authenticatorData || clientDataHash` with an injected device ECDSA certificate).
+   - By default, this applet leaves the vendor CTAP provisioning window (command `0x46`) open on clean installations before any user credentials are generated.
+2. **Injecting the Certificate Chain**:
+   - Run the bundled provisioning script on the connected card before registering any credentials:
+     ```powershell
+     python install_attestation_cert.py --name "JCOP4 FIDO2 Security Key" --org "MySecurityKey"
+     ```
+   - This generates and injects a dedicated P-256 batch attestation private key, a unique 16-byte AAGUID, and a CBOR-encoded X.509 certificate chain.
+3. **Permanent Lock Across Resets**:
+   - Once user credentials are created, attestation injection is **permanently locked**.
+   - Successfully provisioned attestation identities survive CTAP card resets (resetting removes user credentials but retains the device identity).
+4. **Dual-Algorithm Attestation Support**:
+   - Injected P-256 device certificates can issue basic attestation for both ES256 and Ed25519 credentials (signing `authenticatorData || clientDataHash` with the device ECDSA key).
+5. **Factory Lockdown Option**:
+   - For enterprise environments requiring self-attestation only with zero risk of injection, installing with parameter `A100F4` permanently locks self-attestation mode immediately.
 
 ---
 
@@ -128,26 +145,33 @@ This fork includes comprehensive audit and defensive improvements based on stati
    gp --install lib/Curve25519.cap
    ```
 
-2. **Step 2: Install FIDO2Applet**
+2. **Step 2: Install FIDO2Applet (Recommended with `--priv 4`)**
    Install the release CAP (Package AID: `A000000647`, Applet AID: `A0000006472F0001`):
    ```powershell
-   gp --install dist/FIDO2-Ed25519.cap
-   ```
-
-3. **Optional: Android NFC / Google Play Services (`CardReset` Privilege)**
-   If you plan to use the card over NFC with Android Google Play Services (which requires card reset privileges for default selection), install with `--priv 4`:
-   ```powershell
+   # Recommended: install with CardReset privilege for optimal Android NFC experience
    gp --install dist/FIDO2-Ed25519.cap --priv 4
    ```
 
-4. **Verification**
-   Query the installed applets to confirm both packages are active:
+   > [!TIP]
+   > **Why `--priv 4` (`CardReset` / Default Selected) is strongly recommended:**
+   > - **Instant Android NFC Passkey Pop-up**: Google Play Services over NFC sends extended-length `SELECT` APDUs, which Java Card Card Managers often do not support. By granting FIDO2 `--priv 4`, FIDO2 is default-selected upon NFC field activation, allowing Android to instantly pop up the system Passkey authentication prompt without latency or timeout.
+   > - **Seamless Multi-Applet Coexistence**: On cards where the factory default MIFARE package has been removed, assigning `--priv 4` to FIDO2 does not interfere with other applets (SmartPGP, PIV, Satochip wallets). Whenever an explicit `SELECT` APDU is sent (e.g., by GnuPG or a crypto wallet), JCOP automatically switches active execution away from FIDO2 in milliseconds.
+   > - *(If installed without `--priv 4`, the applet functions normally on desktop PC/SC and apps sending standard SELECT, but may encounter recognition friction under Android's native NFC stack.)*
+
+3. **Step 3 (Optional): Provision Attestation for U2F / Enterprise Support**
+   If you require traditional CTAP1/U2F 2FA or enterprise device verification (see Section 5):
+   ```powershell
+   python install_attestation_cert.py --name "JCOP4 FIDO2 Security Key" --org "MyBrand"
+   ```
+
+4. **Step 4: Verification**
+   Query the installed applets to confirm both packages are active and properly configured:
    ```powershell
    gp -l
    ```
    You should see:
    - Package: `FF00025519` (Curve25519 native library)
-   - Package: `A000000647` / Applet: `A0000006472F0001` (FIDO2Applet)
+   - Package: `A000000647` / Applet: `A0000006472F0001` with `CardReset` privilege
 
 ---
 
@@ -286,17 +310,34 @@ python tools/verify_release.py
 
 ---
 
-### 🔏 5. 证明证书与生命周期管理
+### 🔏 5. 证明证书生命周期与传统非 Passkey (U2F / 企业级) 认证支持
+
+#### Passkey 消费级场景 vs. 传统 2FA / U2F / 企业级场景
+在实际部署与使用中，依赖方（RP / 服务端）通常分为两种不同要求：
+- **消费级 Passkey 场景（可发现凭据 / 免密登录）**：
+  主流消费级互联网网站（Google、GitHub、Apple、微软等）普遍采用自证明（Self-Attestation）或完全忽略证明（`none` 模式）。在此类场景下，服务端仅需验证公钥签名，不强制校验卡片出厂根证书。FIDO2Applet 在默认安装状态下（全零 AAGUID、自证明模式）即可完美支持此类消费级 Passkey 业务。
+- **传统 2FA / 经典 U2F / 金融与企业内网场景（非 Passkey 场景）**：
+  - **CTAP1 / U2F 协议规范强制要求**：经典的 FIDO U2F 协议在注册时，规范**强制要求**设备提供有效的 P-256 批次证明私钥与 X.509 设备证书链。在纯自证明模式下，任何强制走 U2F 协议的传统两步验证（2FA）**均无法完成注册**！
+  - **企业级白名单合规（Direct Attestation）**：高安全等级企业身份提供商（如 Okta、Duo Security、AWS IAM、金融机构内网）通常开启了直连证明校验，会严格比对证书链与 AAGUID 白名单，拒绝未经验证的匿名自证明硬件。
+
+#### 注入自定义 Attestation 证明身份（开启全功能 U2F 与企业支持）
+为了让本卡兼具现代免密 Passkey 与传统企业级硬件钥匙的双重能力，本分支提供了灵活的证明证书注入机制：
 
 1. **初始证明身份注入窗口**：
-   - 本分支默认策略允许在尚未生成任何凭据的新卡上，直接注入自定义的设备/批次证明私钥与 X.509 证书链（无需繁琐的安装参数）。
-2. **永久锁定机制**：
-   - 一旦卡片创建了第一个用户凭据，证明证书注入通道即被**永久锁定**，严防未经授权的篡改。
-   - 成功注入的证明身份在执行 CTAP 卡片重置（Reset）后仍然保留并锁定。
-3. **出厂预锁能力**：
-   - 针对需要出厂即锁死自证明模式的生产流程，安装时传入参数 `A100F4` 即可永久禁用注入功能。
-4. **双算法证书支持**：
-   - 既支持纯粹的 **PureEd25519 自证明**，也支持通过注入的 P-256 根证书链为 Ed25519 凭据出具基础证明（Basic Attestation）。
+   - 本分支默认策略在卡片**尚未生成任何用户凭据前**，保持开放 Vendor CTAP 证明证书注入通道（命令字节 `0x46`）。
+2. **执行证书注入**：
+   - 在首次使用卡片注册凭据前，运行仓库自带的注入脚本：
+     ```powershell
+     python install_attestation_cert.py --name "JCOP4 FIDO2 Security Key" --org "MySecurityKey"
+     ```
+   - 该脚本会自动为卡片配置独立的 16 字节 AAGUID、专有的 P-256 批次证明私钥以及完整的 X.509 DER 证书链。
+3. **永久锁定与跨 Reset 保留**：
+   - 一旦卡片创建了第一个用户凭据，证明证书注入通道即被**永久锁定**，严防篡改；
+   - 成功注入的证明身份在执行 CTAP 卡片重置（Reset）后**依然完整保留**（重置仅清空用户凭据，不抹去设备身份）。
+4. **双算法基础证明输出**：
+   - 注入的 P-256 设备证书链不仅支持 ES256 凭据，还能为 Ed25519 凭据出具标准的基础证明（Basic Attestation），签署 `authenticatorData || clientDataHash`。
+5. **出厂预锁死选项**：
+   - 针对需要出厂即锁死自证明模式的批量场景，安装时传入参数 `A100F4` 即可永久禁用注入功能。
 
 ---
 
@@ -315,26 +356,33 @@ python tools/verify_release.py
    gp --install lib/Curve25519.cap
    ```
 
-2. **第二步：安装 FIDO2Applet 应用**
+2. **第二步：安装 FIDO2Applet 主应用（强烈推荐携带 `--priv 4`）**
    安装发行的 CAP 文件（Package AID: `A000000647`，Applet AID: `A0000006472F0001`）：
    ```powershell
-   gp --install dist/FIDO2-Ed25519.cap
-   ```
-
-3. **可选步骤：Android NFC / Google Play 服务的 `CardReset` 权限**
-   若希望在 Android 手机上通过 NFC 使用 Google Play Services 的 FIDO2 功能（其默认选择流程需要卡片重置权限），可携带 `--priv 4` 安装：
-   ```powershell
+   # 强烈推荐：赋予 CardReset 默认选择权限以获得最佳 Android NFC 体验
    gp --install dist/FIDO2-Ed25519.cap --priv 4
    ```
 
-4. **验证安装状态**
+   > [!TIP]
+   > **为什么强烈推荐使用 `--priv 4` (`CardReset` / 默认选择权限)？**
+   > - **安卓手机 NFC 碰一碰秒弹 Passkey**：Android Google Play Services 在通过 NFC 与智能卡交互时，发送的是超长（Extended-Length）SELECT APDU，普通 Java Card 卡片管理器往往无法识别导致超时。赋予 FIDO2 `--priv 4` 权限后，卡片在接触射频场的瞬间直接以 FIDO2 身份就绪，安卓系统无需复杂握手即可直接弹出原生验证弹窗，体验比肩正品 YubiKey！
+   > - **多应用共存无缝切换**：在已清理出厂预置门禁包的卡片上，给 FIDO2 赋予该权限不会干扰其他应用（SmartPGP、PIV、Satochip 钱包）。当电脑或手机 App 发起显式 `SELECT` 指令时，JCOP 操作系统会在毫秒内平滑切到目标应用，两全其美。
+   > - *(若不带 `--priv 4` 安装，卡片在电脑端和显式发指令的场景完全正常，但在部分安卓手机的原生 Passkey 扫卡时可能出现识别延迟或需多次贴卡。)*
+
+3. **第三步（可选）：注入 Attestation 证书以支持 U2F / 企业级认证**
+   若需要使用传统的 CTAP1/U2F 2FA 硬件钥匙功能或企业级设备白名单合规（详见第 5 节）：
+   ```powershell
+   python install_attestation_cert.py --name "JCOP4 FIDO2 Security Key" --org "MyBrand"
+   ```
+
+4. **第四步：验证安装状态**
    查询已安装应用列表：
    ```powershell
    gp -l
    ```
    输出中应包含：
    - Package: `FF00025519`（Curve25519 底层驱动）
-   - Package: `A000000647` / Applet: `A0000006472F0001`（FIDO2 主应用）
+   - Package: `A000000647` / Applet: `A0000006472F0001`（包含 `CardReset` 权限）
 
 ---
 
