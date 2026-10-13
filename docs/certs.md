@@ -9,9 +9,9 @@ an AAGUID, a certificate chain, and a private key before using the applet. Only 
 certificates (ECDSA) are supported for the authenticator's own certificate; any algorithm
 may be used for CAs further up the chain.
 
-These may be provided via a vendor CTAP command (command byte 0x46). In order
-to enable the vendor CTAP command, you must install the applet with parameters enabling it:
-see [the install guide](installation.md).
+These may be provided via a vendor CTAP command (command byte 0x46). This fork enables
+first-use certificate provisioning by default. Explicit install parameter `A100F4`
+retains the upstream locked-self-attestation profile: see [the install guide](installation.md).
 
 The vendor CTAP command will be rejected if the authenticator already contains a certificate,
 or if the authenticator has been used to make any credentials since the last reset, so it must

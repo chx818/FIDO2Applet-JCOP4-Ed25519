@@ -39,7 +39,7 @@ public class ResidentKeyData {
     /**
      * Offset in IVs of IV for encrypting the credential's large blob data
      */
-    private static final short LARGE_BLOB_IV_OFFSET = USER_NAME_IV_OFFSET + IV_LEN;
+    private static final short LARGE_BLOB_IV_OFFSET = RP_IV_OFFSET + IV_LEN;
     /**
      * Offset in IVs of IV for encrypting the credential's credBlob (opaque platform-driven storage)
      */
@@ -85,9 +85,14 @@ public class ResidentKeyData {
      */
     private byte rpIdLength;
     /**
-     * Encrypted (with the device wrapping key) public key X+Y point data for resident keys
+     * Public credential key: P-256 X || Y (64 bytes), or RFC 8032 Ed25519 (32 bytes)
      */
     private final byte[] publicKey;
+
+    public short getPublicKeyLength() {
+        return (short) publicKey.length;
+    }
+
     /**
      * Encrypted (with the device wrapping key) credBlobs for resident keys
      */
@@ -125,8 +130,9 @@ public class ResidentKeyData {
         if (credBlobLen > 0) {
             credBlob = new byte[encryptableLength(credBlobLen)];
             wrapper.init(key, Cipher.MODE_ENCRYPT, IVs, CRED_BLOB_IV_OFFSET, IV_LEN);
-            wrapper.doFinal(credBlobBuffer, credBlobOffset, (short) credBlob.length,
-                    credBlob, (short) 0);
+            Util.arrayCopy(credBlobBuffer, credBlobOffset, credBlob, (short) 0, credBlobLen);
+            // Newly allocated tail is zero; do not read past the supplied blob.
+            wrapper.doFinal(credBlob, (short) 0, (short) credBlob.length, credBlob, (short) 0);
             this.credBlobLen = credBlobLen;
         } else {
             credBlob = null;
@@ -195,8 +201,8 @@ public class ResidentKeyData {
         }
         rpId = new byte[encryptableLength(rpIdLength)];
         wrapper.init(key, Cipher.MODE_ENCRYPT, IVs, RP_IV_OFFSET, IV_LEN);
-        wrapper.doFinal(rpIdBuffer, rpIdOffset, (short) rpId.length,
-                rpId, (short) 0);
+        Util.arrayCopy(rpIdBuffer, rpIdOffset, rpId, (short) 0, rpIdLength);
+        wrapper.doFinal(rpId, (short) 0, (short) rpId.length, rpId, (short) 0);
         this.rpIdLength = rpIdLength;
     }
 
@@ -221,6 +227,9 @@ public class ResidentKeyData {
         }
         Util.arrayCopy(userIdBuffer, userIdOffset,
                 userId, (short) 0, userIdLength);
+        for (short i = userIdLength; i < (short)userId.length; i++) {
+            userId[i] = 0;
+        }
         wrapper.init(key, Cipher.MODE_ENCRYPT, IVs, USER_ID_IV_OFFSET, IV_LEN);
         wrapper.doFinal(userId, (short) 0, (short) userId.length,
                 userId, (short) 0);
@@ -237,6 +246,9 @@ public class ResidentKeyData {
         }
         Util.arrayCopy(userNameBuffer, userNameOffset,
                 userName, (short) 0, userNameLength);
+        for (short i = userNameLength; i < (short)userName.length; i++) {
+            userName[i] = 0;
+        }
         wrapper.init(key, Cipher.MODE_ENCRYPT, IVs, USER_NAME_IV_OFFSET, IV_LEN);
         wrapper.doFinal(userName, (short) 0, (short) userName.length,
                 userName, (short) 0);

@@ -26,6 +26,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly files("lib/curve25519.jar")
     if (jcHomeSet) {
         testImplementation(group: 'com.klinec', name: 'jcardsim', version: '3.0.5.11') {
             // Javacard will be provided by the user at runtime through the JC_HOME env var
@@ -35,10 +36,13 @@ dependencies {
         // Perform a full-test build, since there's no javacard SDK
         implementation(group: 'com.klinec', name: 'jcardsim', version: '3.0.5.11')
     }
+    testImplementation 'org.bouncycastle:bcprov-jdk15on:1.70'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.8.1'
 
     testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.8.1'
 }
+
+sourceSets.test.java.srcDir 'simulator-support/src'
 
 test {
     useJUnitPlatform()
@@ -63,9 +67,9 @@ if (jcHomeSet) {
         config {
             cap {
                 packageName 'us.q3q.fido2'
-                version '0.4'
+                version '0.5'
                 aid PackageID
-                output 'FIDO2.cap'
+                output 'FIDO2-Ed25519-unverified.cap'
                 applet {
                     className 'us.q3q.fido2.FIDO2Applet'
                     aid ApplicationID

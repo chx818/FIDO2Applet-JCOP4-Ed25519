@@ -1,0 +1,52 @@
+{
+  "cap_components_sha256": {
+    "us/q3q/fido2/javacard/Applet.cap": "06f818345f2513b07e9156be30ae52d9f6523250689f2be2755b46217b4db054",
+    "us/q3q/fido2/javacard/Class.cap": "d2d5174c122c91d72ab5c1906e3c170f8fddd3112b7f47d45ffb8e1b204d5a72",
+    "us/q3q/fido2/javacard/ConstantPool.cap": "deea5030d35aa94e053679cffb112b9aefc56ff1b5250b667a65b734e149af67",
+    "us/q3q/fido2/javacard/Descriptor.cap": "23192f515b23d7a7c4f3f5f78b0814ac54c180a289b6da4ea49fb1e4197485f3",
+    "us/q3q/fido2/javacard/Directory.cap": "31d993d04a0bea9b4717f915e06e4ce701204f9fbf835ef9852246ab47e1557a",
+    "us/q3q/fido2/javacard/Header.cap": "3d41e5ee767249bcbe51cb066a9613e20fbe573cba56551a8fc8b365fb839543",
+    "us/q3q/fido2/javacard/Import.cap": "75a44b557cdaf9474fceb2fe9c2202be007c3a41b73b7eaa2eba11b1885a40ff",
+    "us/q3q/fido2/javacard/Method.cap": "7b5693d677e21e66176fa761d6ac0f97c7910a36ad2753d3cb36d8c31dea1849",
+    "us/q3q/fido2/javacard/RefLocation.cap": "56f9d7d1f0eaeefa9e5f0ea751404973ac8e425d0ba41869efb217f3391c769f",
+    "us/q3q/fido2/javacard/StaticField.cap": "5ee5ece66b3f35a7c98f40041d4947f5c5a9edabe82e601b762bd8b755160c51"
+  },
+  "cap_component_bytes": 43676,
+  "hardware_tested": false,
+  "upstream_commit": "3bddc3d4ce05c2668d79ff4542faa2c477adc908",
+  "target": "3.0.5",
+  "package_version": "0.5",
+  "cap_sha256": "b09f8213896ee6fc7866be02cdff748815a0b49636cb96f905a40d06b5df9e1f",
+  "source_sha256": {
+    "src/main/java/us/q3q/fido2/BufferManager.java": "0d84674c7b6bcf717a66d049dfd0638e2c35e6fea07792bf84ee3b1066d07419",
+    "src/main/java/us/q3q/fido2/CannedCBOR.java": "d353c01d1496d464aa0579003cfd134f61ac320c798b562831d576e4732032ce",
+    "src/main/java/us/q3q/fido2/Ed25519Credentials.java": "0c78b99c17a32ea12a53851a9db01f7eec3c9a5551d8c9159fc5985188409e71",
+    "src/main/java/us/q3q/fido2/FIDO2Applet.java": "f8d4058f62cf86cd45a6578da66a1dc16dd086d485bb253aafaebf517527dbe5",
+    "src/main/java/us/q3q/fido2/FIDOConstants.java": "e79c691991dbe4c97c1af4b8df3bb177aeb1c62fceb841a74e7c9398182a2610",
+    "src/main/java/us/q3q/fido2/P256Constants.java": "c4d359688561914aa5074def3026745a91f9a6c032aef3c11acd5bb2841084ae",
+    "src/main/java/us/q3q/fido2/PinRetryCounter.java": "516ac8a6cc8e975a58fd4c79dbd21769974faeab4c77d698988445c81956cbbb",
+    "src/main/java/us/q3q/fido2/ResidentKeyData.java": "3bc1060a68d7d97661e98aaa50b28a41adaaca7155fc69caf9f15a76c04c9ab3",
+    "src/main/java/us/q3q/fido2/SigOpCounter.java": "7f368b2bccfbf3bb3bd2e50c6a8d4550afb05c89e4b485fb120cf739fe1555a8",
+    "src/main/java/us/q3q/fido2/TransientStorage.java": "f1dcd12156c0882599fc02f179e218af8c29fc586ad1e15933e8d75ffaba9331",
+    "tools/build_cap.py": "83c67a68a13341e01ab36009956705aae35159fad91346f214c72a1023825416"
+  },
+  "binary_dependencies": {
+    "Curve25519.cap": "f81943f52d2f22ea63d773d07736bebc34a0ed69d5c233633b043db6a8e5bb22",
+    "curve25519.jar": "5bc1df74c6dd30476fb854dde5465b2f44b27b3bfbf3051302d044d91b21c1e4"
+  },
+  "sdk_sha256": {
+    "api_classic.jar": "686c789a2a7a0176366b45dbe1971c02b4d24f8a185ae0aee7c67fedfaed4bc0",
+    "tools.jar": "179b4eda4cea2d058b2c239f0d5e2b98940faced7f6b4e8287af7718df3184dd",
+    "asm-8.0.1.jar": "ca5b8d11569e53921b0e3486469e7c674361c79845dad3d514f38ab6e0c8c10a",
+    "commons-cli-1.4.jar": "fd3c7c9545a9cdb2051d1f9155c4f76b1e4ac5a57304404a6eedb578ffba7328",
+    "commons-logging-1.2-9f99a00.jar": "1299c91d972baf77aa80753f2dcca664fe0838805b57f804101046cd5ae65cd1",
+    "json.jar": "e242b18d363cf1538ef409e1fe73d77b61fd19513980bf0820293d1f61a8d20c"
+  },
+  "jdk_release": "IMPLEMENTOR=\"Eclipse Adoptium\"\nIMPLEMENTOR_VERSION=\"Temurin-11.0.32.1+1\"\nJAVA_RUNTIME_VERSION=\"11.0.32.1+1\"\nJAVA_VERSION=\"11.0.32.1\"\nJAVA_VERSION_DATE=\"2026-08-18\"\nLIBC=\"default\"\nMODULES=\"java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.vm.ci jdk.management jdk.unsupported jdk.internal.vm.compiler jdk.aot jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.crypto.mscapi jdk.dynalink jdk.internal.ed jdk.editpad jdk.hotspot.agent jdk.httpserver jdk.internal.le jdk.internal.opt jdk.internal.vm.compiler.management jdk.jartool jdk.javadoc jdk.jcmd jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jfr jdk.jlink jdk.jshell jdk.jsobject jdk.jstatd jdk.localedata jdk.management.jfr jdk.naming.dns jdk.naming.ldap jdk.naming.rmi jdk.net jdk.pack jdk.rmic jdk.scripting.nashorn jdk.scripting.nashorn.shell jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported.desktop jdk.xml.dom jdk.zipfs\"\nOS_ARCH=\"x86_64\"\nOS_NAME=\"Windows\"\nSOURCE=\".:git:c663d6d002c4\"\nBUILD_SOURCE=\"git:e6ba7dec3d07654074559310376a3ae89da5f4ac\"\nBUILD_SOURCE_REPO=\"https://github.com/adoptium/temurin-build.git\"\nSOURCE_REPO=\"https://github.com/adoptium/jdk11u.git\"\nFULL_VERSION=\"11.0.32.1+1\"\nSEMANTIC_VERSION=\"11.0.32.1+1\"\nBUILD_INFO=\"OS: Windows Server 2022 Version: 10.0\"\nJVM_VARIANT=\"Hotspot\"\nJVM_VERSION=\"11.0.32.1+1\"\nIMAGE_TYPE=\"JDK\"\n",
+  "jdk_files_sha256": {
+    "bin/javac.exe": "9a54effe7088d627a433a61da65d71fb420b5a67d163577c6c4f0ec3dfc3dbd6",
+    "bin/java.exe": "9fcc7d5d43918e389df240d44601c98a4d3aa9e7d0cbbd6d208304e0b574c7e2",
+    "lib/modules": "ca286003ac94ca284764f4c3e5bf7cb57d653405b7beadad684203c70f6db3e7"
+  },
+  "verification": "two independent builds, raw and canonical CAPs verified; hardware not exercised by this build"
+}

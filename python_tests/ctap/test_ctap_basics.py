@@ -67,7 +67,7 @@ class CTAPBasicsTestCase(CTAPTestCase):
 
     def test_info_supported_algs_hint(self):
         info = self.ctap2.get_info()
-        self.assertEqual([{'alg': -7, "type": "public-key"}], info.algorithms)
+        self.assertEqual(getattr(self, "EXPECTED_ALGORITHMS", [{'alg': -7, "type": "public-key"}]), info.algorithms)
 
     def test_make_credential_self_attestation(self):
         rp_id = secrets.token_hex(50)
@@ -82,7 +82,7 @@ class CTAPBasicsTestCase(CTAPTestCase):
         self.assertEqual(res.auth_data.FLAG.UP | res.auth_data.FLAG.ATTESTED, res.auth_data.flags)
         self.assertEqual(self.rp_id_hash(rp_id), res.auth_data.rp_id_hash)
 
-        self.assertEqual(ES256.ALGORITHM, res.att_stmt['alg'])
+        self.assertEqual(getattr(self, 'EXPECTED_CREDENTIAL_ALGORITHM', ES256.ALGORITHM), res.att_stmt['alg'])
         self.assertIsNotNone(res.att_stmt['sig'])
         self.assertEqual(Aaguid.NONE, res.auth_data.credential_data.aaguid)
 

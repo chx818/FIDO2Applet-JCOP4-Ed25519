@@ -11,55 +11,55 @@ public final class TransientStorage {
      * One-byte-long temporary values
      */
     private final byte[] tempBytes;
-    private static final byte IDX_PIN_RETRIES_SINCE_RESET = 0; // 1 byte
+    private final byte[] resetBytes; // PIN attempts must survive deselection.
     /**
      * Used for:
      * - storing found indices in searches
      * - storing the original output length (not including x5c) when streaming makeCredential results
      * - storing the expected next index (12 bits) and four bits of the total length of a largeBlobStore write
      */
-    private static final byte IDX_TEMP_BUF_IDX_STORAGE = 1; // 2 bytes
+    private static final byte IDX_TEMP_BUF_IDX_STORAGE = 0; // 2 bytes
     /**
      * Used for:
      * - storing found lengths in searches
      * - storing eight bits of the total length of a largeBlobStore write
      */
-    private static final byte IDX_TEMP_BUF_IDX_LEN = 3; // 1 byte
+    private static final byte IDX_TEMP_BUF_IDX_LEN = 2; // 1 byte
     /**
      * A permissions bitfield for the currently set PIN token
      *
      * The lower six bits are used for FIDO 2 permissions. The two most significant bits encode the PIN protocol number.
      */
-    private static final byte IDX_PIN_PROTOCOL_NUMBER_AND_PERMISSIONS = 4; // 1 byte
+    private static final byte IDX_PIN_PROTOCOL_NUMBER_AND_PERMISSIONS = 3; // 1 byte
     /**
      * Cred or RP iteration index, used when iterating through creds or RPs with credManagement commands
      * Disambiguated by the most significant bit: 1 for RPs, 0 for creds
      */
-    private static final byte IDX_CRED_RP_ITERATION_POINTER = 5; // 2 bytes
+    private static final byte IDX_CRED_RP_ITERATION_POINTER = 4; // 2 bytes
     /**
      * Index of next credential to consider when iterating through assertions with getNextAssertion commands
      */
-    private static final byte IDX_ASSERT_ITERATION_POINTER = 7; // 1 byte
+    private static final byte IDX_ASSERT_ITERATION_POINTER = 6; // 1 byte
     /**
      * When writing an overlong response using chained APDUs, stores the position we're up to in the outgoing buffer
      */
-    private static final byte IDX_CONTINUATION_OUTGOING_WRITE_OFFSET = 8; // 2 bytes
+    private static final byte IDX_CONTINUATION_OUTGOING_WRITE_OFFSET = 7; // 2 bytes
     /**
      * When writing an overlong response using chained APDUs, stores the remaining bytes in the outgoing buffer
      */
-    private static final byte IDX_CONTINUATION_OUTGOING_REMAINING = 10; // 2 bytes
+    private static final byte IDX_CONTINUATION_OUTGOING_REMAINING = 9; // 2 bytes
     /**
      * When reading an overlong incoming request using chained APDUs, stores the fill level of the incoming buffer
      */
-    private static final byte IDX_CHAINING_INCOMING_READ_OFFSET = 12; // 2 bytes
+    private static final byte IDX_CHAINING_INCOMING_READ_OFFSET = 11; // 2 bytes
     /**
      * Giant boolean bitfield that holds all the BOOL_IDX variables below
      */
-    private static final byte IDX_BOOLEAN_OMNIBUS = 14; // 2 bytes
+    private static final byte IDX_BOOLEAN_OMNIBUS = 13; // 2 bytes
     /**
      * How many bytes long the temp storage should be
      */
-    private static final byte NUM_RESET_BYTES = 16;
+    private static final byte NUM_DESELECT_BYTES = 16;
 
     // boolean bit indices held in BOOLEAN_OMNIBUS byte above
     /**
@@ -70,10 +70,7 @@ public final class TransientStorage {
      * - 11: x5c streaming in progress, lbk follows
      */
     private static final byte BOOL_IDX_STREAM_STATEKEEPING = 0;
-    /**
-     * set when authenticator key initialized
-     */
-    private static final byte BOOL_IDX_RESET_PLATFORM_KEY_SET = 2;
+    private static final byte BOOL_IDX_PLATFORM_KEY_SET = 2;
     /**
      * set if the "up" (User Presence) option is enabled
      */
@@ -100,13 +97,15 @@ public final class TransientStorage {
     private static final byte BOOL_IDX_APPLET_SELECTED = 8;
 
     public TransientStorage() {
-        // Pin-retries-since-reset counter, which must be cleared on RESET, not on deselect, is stored in this array
-        tempBytes = JCSystem.makeTransientByteArray(NUM_RESET_BYTES, JCSystem.CLEAR_ON_RESET);
+        // Preserve the original lifetimes, while reserving COR only for the PIN attempt counter.
+        tempBytes = JCSystem.makeTransientByteArray(NUM_DESELECT_BYTES, JCSystem.CLEAR_ON_DESELECT);
+        resetBytes = JCSystem.makeTransientByteArray((short) 1, JCSystem.CLEAR_ON_RESET);
     }
 
     public void fullyReset() {
+        resetBytes[0] = 0;
         // FULL reset includes pin-retry-since-reset counter and platform-authenticator state
-        Util.arrayFillNonAtomic(tempBytes, (short) 0, NUM_RESET_BYTES, (byte) 0x00);
+        Util.arrayFillNonAtomic(tempBytes, (short) 0, NUM_DESELECT_BYTES, (byte) 0x00);
     }
 
     private boolean getBoolByIdx(byte idx) {
@@ -213,33 +212,39 @@ public final class TransientStorage {
     }
 
     public byte getPinTriesSinceReset() {
-        return tempBytes[IDX_PIN_RETRIES_SINCE_RESET];
+        return resetBytes[0];
     }
 
     public void clearPinTriesSinceReset() {
-        tempBytes[IDX_PIN_RETRIES_SINCE_RESET] = 0;
+        resetBytes[0] = 0;
     }
 
     public void incrementPinTriesSinceReset() {
-        tempBytes[IDX_PIN_RETRIES_SINCE_RESET]++;
+        resetBytes[0]++;
     }
 
     public void setPlatformKeySet() {
-        setBoolByIdx(BOOL_IDX_RESET_PLATFORM_KEY_SET, true);
+        setBoolByIdx(BOOL_IDX_PLATFORM_KEY_SET, true);
     }
 
     public boolean isPlatformKeySet() {
-        return getBoolByIdx(BOOL_IDX_RESET_PLATFORM_KEY_SET);
+        return getBoolByIdx(BOOL_IDX_PLATFORM_KEY_SET);
     }
 
     public void clearOnDeselect() {
-        // Restore platform-key-set state afterwards: we want to preserve that across deselects
-        boolean platformKeySetState = isPlatformKeySet();
-        // Note: fill starts from index 1, skipping the pin-retries-since-reset counter
-        Util.arrayFillNonAtomic(tempBytes, (short) 1, (short)(NUM_RESET_BYTES - 1), (byte) 0x00);
-        if (platformKeySetState) {
-            setPlatformKeySet();
-        }
+        // PIN attempts survive deselect. The COD platform key must be regenerated at next select.
+        Util.arrayFillNonAtomic(tempBytes, (short) 0, NUM_DESELECT_BYTES, (byte) 0);
+    }
+
+    // A CTAP error cannot be returned in the middle of an ISO command chain:
+    // clients treat 9000 as permission to send the next fragment. Retain the
+    // error in COD, discard remaining fragments, and emit it on the final APDU.
+    public byte getChainedError() {
+        return tempBytes[15];
+    }
+
+    public void setChainedError(byte error) {
+        tempBytes[15] = error;
     }
 
     public void readyStoredVars() {

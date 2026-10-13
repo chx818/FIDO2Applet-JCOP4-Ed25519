@@ -10,7 +10,7 @@ from ctap.ctap_test import CTAPTestCase
 
 class LockedSelfAttestationTestCase(CTAPTestCase):
     def setUp(self, install_params: Optional[bytes] = None) -> None:
-        super().setUp(bytes())
+        super().setUp(bytes.fromhex("A100F4"))
 
     def test_switching_attestation_modes_disallowed(self):
         info = self.ctap2.get_info()

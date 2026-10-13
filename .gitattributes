@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.cap binary
+*.jar binary
+*.class binary
+# Imported API documentation retains upstream whitespace; executable source unchanged.
+simulator-support/src/org/suut/javacard/pki/curve25519/Curve25519PrivateKey.java whitespace=-blank-at-eol
+simulator-support/src/org/suut/javacard/pki/curve25519/Curve25519PublicKey.java whitespace=-blank-at-eol

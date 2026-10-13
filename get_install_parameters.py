@@ -7,7 +7,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("get_install_parameters",
                                      description="Return parameters for installing FIDO2Applet with custom settings")
     parser.add_argument('--enable-attestation', action='store_true', default=None,
-                        help="Allows loading an attestation certificate after installing the applet")
+                        help="Explicitly enables first-use certificate loading (already enabled by default in this fork)")
     parser.add_argument('--high-security', action='store_true', default=None,
                         help="Does not comply with the FIDO standards, but protects credentials against bugs or "
                              "faulty authenticator hardware. Implies high-security RKs.")
