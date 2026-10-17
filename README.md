@@ -145,18 +145,18 @@ To support both modern Passkeys and strict traditional U2F / Enterprise 2FA work
    gp --install lib/Curve25519.cap
    ```
 
-2. **Step 2: Install FIDO2Applet (Recommended with `--priv 4`)**
+2. **Step 2: Install FIDO2Applet (Recommended with `--privs CardReset`)**
    Install the release CAP (Package AID: `A000000647`, Applet AID: `A0000006472F0001`):
    ```powershell
    # Recommended: install with CardReset privilege for optimal Android NFC experience
-   gp --install dist/FIDO2-Ed25519.cap --priv 4
+   gp --install dist/FIDO2-Ed25519.cap --privs CardReset
    ```
 
    > [!TIP]
-   > **Why `--priv 4` (`CardReset` / Default Selected) is strongly recommended:**
-   > - **Instant Android NFC Passkey Pop-up**: Google Play Services over NFC sends extended-length `SELECT` APDUs, which Java Card Card Managers often do not support. By granting FIDO2 `--priv 4`, FIDO2 is default-selected upon NFC field activation, allowing Android to instantly pop up the system Passkey authentication prompt without latency or timeout.
-   > - **Seamless Multi-Applet Coexistence**: On cards where the factory default MIFARE package has been removed, assigning `--priv 4` to FIDO2 does not interfere with other applets (SmartPGP, PIV, Satochip wallets). Whenever an explicit `SELECT` APDU is sent (e.g., by GnuPG or a crypto wallet), JCOP automatically switches active execution away from FIDO2 in milliseconds.
-   > - *(If installed without `--priv 4`, the applet functions normally on desktop PC/SC and apps sending standard SELECT, but may encounter recognition friction under Android's native NFC stack.)*
+   > **Why `--privs CardReset` (Default Selected) is strongly recommended:**
+   > - **Instant Android NFC Passkey Pop-up**: Google Play Services over NFC sends extended-length `SELECT` APDUs, which Java Card Card Managers often do not support. By granting FIDO2 `--privs CardReset`, FIDO2 is default-selected upon NFC field activation, allowing Android to instantly pop up the system Passkey authentication prompt without latency or timeout.
+   > - **Seamless Multi-Applet Coexistence**: On cards where the factory default MIFARE package has been removed, assigning `--privs CardReset` to FIDO2 does not interfere with other applets (SmartPGP, PIV, Satochip wallets). Whenever an explicit `SELECT` APDU is sent (e.g., by GnuPG or a crypto wallet), JCOP automatically switches active execution away from FIDO2 in milliseconds.
+   > - *(If installed without `--privs CardReset`, the applet functions normally on desktop PC/SC and apps sending standard SELECT, but may encounter recognition friction under Android's native NFC stack.)*
 
 3. **Step 3 (Optional): Provision Attestation for U2F / Enterprise Support**
    If you require traditional CTAP1/U2F 2FA or enterprise device verification (see Section 5):
@@ -356,18 +356,18 @@ python tools/verify_release.py
    gp --install lib/Curve25519.cap
    ```
 
-2. **第二步：安装 FIDO2Applet 主应用（强烈推荐携带 `--priv 4`）**
+2. **第二步：安装 FIDO2Applet 主应用（强烈推荐携带 `--privs CardReset`）**
    安装发行的 CAP 文件（Package AID: `A000000647`，Applet AID: `A0000006472F0001`）：
    ```powershell
    # 强烈推荐：赋予 CardReset 默认选择权限以获得最佳 Android NFC 体验
-   gp --install dist/FIDO2-Ed25519.cap --priv 4
+   gp --install dist/FIDO2-Ed25519.cap --privs CardReset
    ```
 
    > [!TIP]
-   > **为什么强烈推荐使用 `--priv 4` (`CardReset` / 默认选择权限)？**
-   > - **安卓手机 NFC 碰一碰秒弹 Passkey**：Android Google Play Services 在通过 NFC 与智能卡交互时，发送的是超长（Extended-Length）SELECT APDU，普通 Java Card 卡片管理器往往无法识别导致超时。赋予 FIDO2 `--priv 4` 权限后，卡片在接触射频场的瞬间直接以 FIDO2 身份就绪，安卓系统无需复杂握手即可直接弹出原生验证弹窗，体验比肩正品 YubiKey！
+   > **为什么强烈推荐使用 `--privs CardReset` (默认选择权限)？**
+   > - **安卓手机 NFC 碰一碰秒弹 Passkey**：Android Google Play Services 在通过 NFC 与智能卡交互时，发送的是超长（Extended-Length）SELECT APDU，普通 Java Card 卡片管理器往往无法识别导致超时。赋予 FIDO2 `--privs CardReset` 权限后，卡片在接触射频场的瞬间直接以 FIDO2 身份就绪，安卓系统无需复杂握手即可直接弹出原生验证弹窗，体验比肩正品 YubiKey！
    > - **多应用共存无缝切换**：在已清理出厂预置门禁包的卡片上，给 FIDO2 赋予该权限不会干扰其他应用（SmartPGP、PIV、Satochip 钱包）。当电脑或手机 App 发起显式 `SELECT` 指令时，JCOP 操作系统会在毫秒内平滑切到目标应用，两全其美。
-   > - *(若不带 `--priv 4` 安装，卡片在电脑端和显式发指令的场景完全正常，但在部分安卓手机的原生 Passkey 扫卡时可能出现识别延迟或需多次贴卡。)*
+   > - *(若不带 `--privs CardReset` 安装，卡片在电脑端和显式发指令的场景完全正常，但在部分安卓手机的原生 Passkey 扫卡时可能出现识别延迟或需多次贴卡。)*
 
 3. **第三步（可选）：注入 Attestation 证书以支持 U2F / 企业级认证**
    若需要使用传统的 CTAP1/U2F 2FA 硬件钥匙功能或企业级设备白名单合规（详见第 5 节）：
