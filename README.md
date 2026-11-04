@@ -99,6 +99,7 @@ This fork includes comprehensive audit and defensive improvements based on stati
    - A unified APDU exit handler ensures that both ECDSA and Ed25519 private key objects are scrubbed even if an unexpected exception occurs during request execution.
 4. **Constant-Time / Fixed-Length Verification**:
    - PIN token MACs, credential HMAC verification, `saltAuth`, and PIN wrapper validations use fixed-length XOR/OR accumulators, eliminating timing side-channels from early loop exits.
+   - **Relying Party ID (RP ID) Hash Matching (v0.5+)**: RP ID comparison in credential resolution enforces constant-time `fixedLengthEquals` across all 32 bytes of the RP ID hash, mitigating website fingerprinting and enumeration timing oracles.
 5. **Chaining Error Recovery & Delayed Status**:
    - In long APDU chains (e.g. certificate injection), if an error occurs mid-stream, a 1-byte COD flag ensures subsequent inbound chunks are cleanly drained before reporting the error, preventing client desynchronization.
 6. **Native Exception Allocator Recovery**:
@@ -188,7 +189,7 @@ This repository adheres to deterministic, reproducible build standards. The preb
 
 #### Verified Release Artifacts
 - **CAP File**: `dist/FIDO2-Ed25519.cap`
-- **SHA-256**: `b09f8213896ee6fc7866be02cdff748815a0b49636cb96f905a40d06b5df9e1f`
+- **SHA-256**: `195b4d8ac9734f2775da60597a5f76d28a488558a9e24fc682d1afb3525aa20f`
 
 #### Building from Source
 Requirements: JDK 11, Oracle Java Card 3.0.5 SDK, Oracle 3.1 Converter.
@@ -308,8 +309,9 @@ python tools/verify_release.py
 3. **私钥敏感材料全路径清零**：
    - Ed25519 私钥 seed 和 scalar 签名完成后立即擦除。
    - 统一 APDU 出口增加防御性异常捕获清理，确保无论是正常响应还是抛出异常，ECDSA 和 Ed25519 临时私钥均被彻底擦除。
-4. **恒定长度认证比较**：
+4. **恒定长度与恒定时间认证比较**：
    - PIN token MAC、凭据 HMAC、`saltAuth` 和 PIN 包装校验采用固定公开长度的累积异或（XOR/OR）比较，消除因数据内容导致的控制流提前退出风险。
+   - **依赖方（RP ID）哈希匹配恒定时间防护**：在凭据查找与过滤匹配逻辑中，RP ID 哈希校验强制采用恒定时间 `fixedLengthEquals` 逐 32 字节比对（而非短路比较），彻底消除网站域名枚举与侧信道指纹探测隐患。
 5. **分包传输错误恢复与延迟响应**：
    - 客户端在发送超长 APDU 链（如证书链导入）中途发生协议错误时，新增 1 字节 COD 延迟错误标志，丢弃后续残留分片并在链末返回正确状态字，防止客户端与卡片会话脱节。
 6. **连续原生异常内存恢复**：
@@ -399,7 +401,7 @@ python tools/verify_release.py
 
 #### 已验证发行产物哈希
 - **文件路径**：`dist/FIDO2-Ed25519.cap`
-- **SHA-256 哈希值**：`b09f8213896ee6fc7866be02cdff748815a0b49636cb96f905a40d06b5df9e1f`
+- **SHA-256 哈希值**：`195b4d8ac9734f2775da60597a5f76d28a488558a9e24fc682d1afb3525aa20f`
 
 #### 从源码构建
 环境要求：JDK 11，Oracle Java Card 3.0.5 SDK，Oracle 3.1 Converter。

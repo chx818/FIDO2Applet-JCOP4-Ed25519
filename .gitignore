@@ -44,3 +44,6 @@ README-Ed25519*.md
 /tools/reconcile_card_memory.py
 /tools/finalize_memory_docs.py
 /tools/final_report_tidy.py
+CHANGELOG_SECURITY.md
+SECURITY_FIX_FINAL.md
+tests/

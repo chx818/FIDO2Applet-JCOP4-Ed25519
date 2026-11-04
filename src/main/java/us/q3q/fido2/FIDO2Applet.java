@@ -3126,9 +3126,9 @@ public final class FIDO2Applet extends Applet implements ExtendedLength {
 
             matches = gottenCredProtLevel <= maximumCredProtectLevel && (!wasRKPreviously || rkNum >= 0);
 
-            // check RP ID
-            if (Util.arrayCompare(outputBuffer, outputOffset,
-                    rpIdBuf, rpIdHashIdx, RP_HASH_LEN) != 0) {
+            // check RP ID - constant-time comparison to prevent fingerprinting
+            if (!fixedLengthEquals(outputBuffer, outputOffset,
+                    rpIdBuf, rpIdHashIdx, RP_HASH_LEN)) {
                 matches = false;
             }
         }
@@ -3143,8 +3143,9 @@ public final class FIDO2Applet extends Applet implements ExtendedLength {
 
             matches = gottenCredProtLevel <= maximumCredProtectLevel && (!wasRKPreviously || rkNum >= 0);
 
-            if (Util.arrayCompare(outputBuffer, outputOffset,
-                    rpIdBuf, rpIdHashIdx, RP_HASH_LEN) != 0) {
+            // check RP ID - constant-time comparison to prevent fingerprinting
+            if (!fixedLengthEquals(outputBuffer, outputOffset,
+                    rpIdBuf, rpIdHashIdx, RP_HASH_LEN)) {
                 matches = false;
             }
         }
